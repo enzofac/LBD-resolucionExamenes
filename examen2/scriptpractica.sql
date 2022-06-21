@@ -191,9 +191,9 @@ caso de 2 clientes con la misma cantidad de alquileres, alfabéticamente según 
 nombre. Incluir el código con la consulta a la vista.*/
 
 DROP VIEW IF EXISTS VRankingAlquileres;
-CREATE VIEW VRankingAlquileres (Codigo,Apellidos,Nombres,CantidadAlquileres) -- duda de si debería poner apellido y nombre en misma columna
+CREATE VIEW VRankingAlquileres (Codigo,ApellidosyNombres,CantidadAlquileres)
 AS
-	SELECT Clientes.idCliente, Clientes.apellidos, Clientes.nombres, COUNT(Peliculas.idPelicula) AS CantidadAlquileres
+	SELECT Clientes.idCliente, CONCAT(Clientes.apellidos,' ', Clientes.nombres), COUNT(Peliculas.idPelicula) AS CantidadAlquileres
     FROM
     Clientes INNER JOIN Alquileres ON Clientes.idCliente = Alquileres.idCliente
 			 INNER JOIN Registros ON Alquileres.idRegistro = Registros.idRegistro
