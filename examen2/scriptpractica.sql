@@ -195,9 +195,9 @@ CREATE VIEW VRankingAlquileres (Codigo,ApellidosyNombres,CantidadAlquileres)
 AS
 	SELECT Clientes.idCliente, CONCAT(Clientes.apellidos,' ', Clientes.nombres), COUNT(Peliculas.idPelicula) AS CantidadAlquileres
     FROM
-    Clientes INNER JOIN Alquileres ON Clientes.idCliente = Alquileres.idCliente
-			 INNER JOIN Registros ON Alquileres.idRegistro = Registros.idRegistro
-             INNER JOIN Peliculas ON Registros.idPelicula = Peliculas.idPelicula
+    Clientes LEFT JOIN Alquileres ON Clientes.idCliente = Alquileres.idCliente
+			 LEFT JOIN Registros ON Alquileres.idRegistro = Registros.idRegistro
+             LEFT JOIN Peliculas ON Registros.idPelicula = Peliculas.idPelicula
 	GROUP BY Clientes.idCliente, Clientes.apellidos, Clientes.nombres
     ORDER BY CantidadAlquileres DESC, Clientes.apellidos ASC, Clientes.nombres ASC
     LIMIT 10;
@@ -251,13 +251,13 @@ DROP PROCEDURE IF EXISTS spTotalAlquileres;
 DELIMITER //
 CREATE PROCEDURE spTotalAlquileres (IN pIdCliente INT)
 BEGIN
-	SELECT Peliculas.idPelicula, Peliculas.titulo AS 'Título', COUNT(Peliculas.idPelicula) AS 'Cantidad'
+	SELECT Peliculas.idPelicula, Peliculas.titulo, COUNT(Alquileres.idAlquiler) AS 'Cantidad'
     FROM
-    Clientes INNER JOIN Alquileres ON Clientes.idCliente = Alquileres.idCliente
-			 INNER JOIN Registros ON Alquileres.idRegistro = Registros.idRegistro
-             INNER JOIN Peliculas ON Registros.idPelicula = Peliculas.idPelicula
+    Clientes LEFT JOIN Alquileres ON Clientes.idCliente = Alquileres.idCliente
+			 LEFT JOIN Registros ON Alquileres.idRegistro = Registros.idRegistro
+             LEFT JOIN Peliculas ON Registros.idPelicula = Peliculas.idPelicula
 	WHERE Clientes.idCliente = pIdCliente
-	GROUP BY Peliculas.idPelicula  WITH ROLLUP
+	GROUP BY Peliculas.idPelicula, Peliculas.titulo  WITH ROLLUP
     ORDER BY Peliculas.titulo ASC;
 END //
 DELIMITER ;
