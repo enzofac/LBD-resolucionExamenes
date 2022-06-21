@@ -257,3 +257,18 @@ END //
 DELIMITER ;
 
 CALL BuscarPeliculasPorActor(100);
+/*5) Utilizando triggers, implementar la lógica para que en caso que se quiera modificar una
+dirección especificando la calle y número de otra dirección existente se informe mediante
+un mensaje de error que no se puede. Incluir el código con la modificación de la calle y
+número de una dirección con un valor distinto a cualquiera de las que ya hubiera definidas y
+otro con un valor igual a otra que ya hubiera definida. */
+DROP TRIGGER IF EXISTS `Trigger1_Modificacion_Direcciones`; 
+DELIMITER //
+CREATE TRIGGER `Trigger1_Modificacion_Direcciones` 
+BEFORE UPDATE ON `Direcciones` FOR EACH ROW
+BEGIN
+	IF EXISTS (SELECT * FROM Direcciones WHERE Direcciones.calleYNumero = NEW.calleYNumero) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'ERROR: Direccion con calle y número existente', MYSQL_ERRNO = 45000;
+	END IF;
+END //
+DELIMITER ;
