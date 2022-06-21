@@ -199,19 +199,61 @@ uno con datos correctos.*/
 
 DROP PROCEDURE IF EXISTS ModificarPelicula;
 DELIMITER //
-CREATE PROCEDURE ModificarPelicula (IN pIdPelicula INT, IN pTitulo VARCHAR(128), IN pEstreno INT, IN pDuracion INT,
-				OUT mensaje VARCHAR(100))
+CREATE PROCEDURE ModificarPelicula (IN pIdPelicula INT, IN pTitulo VARCHAR(128), IN pEstreno INT, IN pDuracion INT, 
+				IN pClasificacion ENUM('G', 'PG', 'PG-13', 'R', 'NC-17'), OUT mensaje VARCHAR(100))
 BEGIN
 	IF pIdPelicula IS NULL THEN
 		SET mensaje = 'ERROR: Código de película vacío';
 	ELSEIF NOT EXISTS (SELECT * FROM Peliculas WHERE Peliculas.idPelicula = pIdPelicula) THEN 
 		SET mensaje = 'ERROR: La pelicula no existe';
-	ELSEIF EXISTS (SELECT * FROM Inventario WHERE Inventario.idPelicula = pIdPelicula) THEN
-		SET mensaje = 'ERROR: La pelicula tiene asociado inventario';
+	ELSEIF (pTitulo IS NULL OR pClasificacion IS NULL) THEN
+		SET mensaje = 'ERROR: campos OBLIGATORIOS vacíos';
 	ELSE
+		
 		START TRANSACTION;
-			DELETE FROM Peliculas WHERE Peliculas.idPelicula = pIdPelicula;
-			SET mensaje = 'Pelicula borrada con éxito';
+			UPDATE Peliculas SET Peliculas.Titulo = pTitulo, Peliculas.estreno = pEstreno, Peliculas.duracion = pDuracion,
+			Peliculas.clasificacion = pClasificacion WHERE Peliculas.idPelicula = pIdPelicula;
+			SET mensaje = 'Pelicula modificada con éxito';
 	END IF;
 END //
 DELIMITER ;
+
+SET @mensaje=null;
+CALL ModificarPelicula(1000,'ZORRO ARK 1',2006,50,'NC-17',@mensaje);
+SELECT @mensaje;
+
+CALL ModificarPelicula(null,'ZORRO ARK 1',2006,50,'NC-17',@mensaje);
+SELECT @mensaje;
+
+CALL ModificarPelicula(1000,'ZORRO ARK 2',null,null,'NC-17',@mensaje);
+SELECT @mensaje;
+
+CALL ModificarPelicula(1000,null,2006,50,'NC-17',@mensaje);
+SELECT @mensaje;
+
+/*4) Realizar un procedimiento almacenado llamado BuscarPeliculasPorAutor que reciba el
+código de un actor y muestre sucursal por sucursal, película por película, la cantidad con el
+mismo. Por cada película del autor especificado se deberá mostrar su código y título, el
+código de la sucursal, la cantidad y la calle y número de la sucursal. La salida deberá estar
+ordenada alfabéticamente según el título de las películas. Incluir en el código la llamada al
+procedimiento.*/
+
+DROP PROCEDURE IF EXISTS BuscarPeliculasPorActor;
+DELIMITER //
+CREATE PROCEDURE BuscarPeliculasPorActor(IN pIdActor CHAR(10))
+BEGIN
+	SELECT Peliculas.idPelicula, Peliculas.titulo AS 'Título', Sucursales.idSucursal, COUNT(Peliculas.idPelicula) AS 'Cantidad',
+	Direcciones.calleYNumero AS 'Calle y número'
+    FROM
+		Actores LEFT JOIN ActoresDePeliculas ON Actores.idActor = ActoresDePeliculas.idActor
+        LEFT JOIN Peliculas ON ActoresDePeliculas.idPelicula = Peliculas.idPelicula
+		LEFT JOIN Inventario ON Peliculas.idPelicula = Inventario.idPelicula
+		LEFT JOIN Sucursales ON Inventario.idSucursal = Sucursales.idSucursal
+		LEFT JOIN Direcciones ON Sucursales.idDireccion = Direcciones.idDireccion
+	WHERE Actores.idActor = pIdActor
+	GROUP BY Peliculas.titulo, Sucursales.idSucursal, Direcciones.calleYNumero
+    ORDER BY Peliculas.titulo ASC;
+END //
+DELIMITER ;
+
+CALL BuscarPeliculasPorActor(100);
